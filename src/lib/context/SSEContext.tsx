@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useRef, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { SSEConfig, SSEConnectionState, Notification } from '../../types';
+import { NotificationAPIClient } from '../../services/NotificationAPIClient';
 
 interface SSEContextValue {
   config: SSEConfig | null;
@@ -43,7 +44,7 @@ export function SSEProvider({
   const [unreadCount, setUnreadCount] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<number | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectDelayRef = useRef(config.reconnectDelay || 1000);
 
@@ -252,14 +253,42 @@ export function SSEProvider({
 
   // Auto-connect on mount if enabled
   useEffect(() => {
-    if (config.autoConnect !== false) {
-      connect();
-    }
+    const initializeNotifications = async () => {
+      // First, fetch initial notifications from API
+      try {
+        console.log('📥 Fetching initial notifications from API...');
+        console.log('   Endpoint: GET', `${config.apiUrl}/notifications/user/${config.userId}/history`);
+        
+        const apiClient = new NotificationAPIClient(config.apiUrl);
+        const initialNotifications = await apiClient.getHistory(config.userId);
+        
+        console.log('   Response received:', initialNotifications);
+        
+        if (initialNotifications && initialNotifications.length > 0) {
+          setNotifications(initialNotifications);
+          const unread = initialNotifications.filter(n => !n.read).length;
+          setUnreadCount(unread);
+          console.log(`✅ Loaded ${initialNotifications.length} notifications (${unread} unread)`);
+        } else {
+          console.log('📭 No notifications found in history (empty or null)');
+        }
+      } catch (err) {
+        console.error('❌ Failed to fetch initial notifications:', err);
+        // Continue anyway, SSE will still work
+      }
+      
+      // Then, connect to SSE for real-time updates
+      if (config.autoConnect !== false) {
+        connect();
+      }
+    };
+
+    initializeNotifications();
 
     return () => {
       disconnect();
     };
-  }, [config.autoConnect]); // Only depend on autoConnect to avoid reconnecting on config changes
+  }, [config.autoConnect, config.apiUrl, config.userId, connect, disconnect]);
 
   // Cleanup on unmount
   useEffect(() => {

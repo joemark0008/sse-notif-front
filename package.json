@@ -1,6 +1,6 @@
 {
   "name": "@joemark0008/sse-notifications-react",
-  "version": "1.0.3",
+  "version": "1.0.8",
   "description": "React package for managing SSE (Server-Sent Events) notifications with hooks and provider",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
@@ -8,6 +8,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "exports": {

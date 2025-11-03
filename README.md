@@ -204,6 +204,72 @@ function App() {
 - **Custom Icons**: Supports custom notification icons
 - **Fallback Handling**: Gracefully handles unsupported browsers
 
+## Notification Persistence
+
+Notifications are **automatically persisted across page refreshes**. When the app loads, it fetches all historical notifications from the server before establishing the SSE connection.
+
+### How It Works
+
+```
+App Mount
+  ↓
+Fetch Historical Notifications (API: GET /notifications/user/{userId}/history)
+  ↓
+Load into Component State
+  ↓
+Establish SSE Connection for Real-Time Updates
+  ↓
+✅ Notifications survive page refresh + receive new updates
+```
+
+### Features
+
+- 📚 **Historical Data**: Loads all past notifications on mount
+- 🔄 **Real-Time Sync**: Immediately connects to SSE for new notifications
+- ✅ **Unread Count**: Automatically calculated from historical data
+- ⚠️ **Error Resilient**: Continues even if history fetch fails (SSE still works)
+- 🔍 **Debug Friendly**: Console logs show exactly what's being fetched
+
+### Behind the Scenes
+
+The `SSEProvider` component:
+
+1. **Initializes** and fetches notification history using `NotificationAPIClient.getHistory()`
+2. **Populates** React state with all notifications and calculates unread count
+3. **Then** establishes the SSE connection for real-time updates
+4. **Gracefully handles** API errors while still connecting to SSE
+
+```typescript
+// This happens automatically on SSEProvider mount:
+const initialNotifications = await apiClient.getHistory(config.userId);
+// GET http://your-api/notifications/user/{userId}/history
+
+setNotifications(initialNotifications);
+const unread = initialNotifications.filter(n => !n.read).length;
+setUnreadCount(unread);
+
+// Then connect to SSE for real-time updates
+connect();
+```
+
+### Debugging Notification Persistence
+
+Open your browser console to see detailed logs:
+
+```
+📥 Fetching initial notifications from API...
+   Endpoint: GET http://localhost:3000/notifications/user/john_doe/history
+   Response received: [...]
+✅ Loaded 25 notifications (3 unread)
+✅ Connected to SSE notifications
+```
+
+If notifications don't appear, check:
+1. Is your backend `/notifications/user/{userId}/history` endpoint working?
+2. Are there any CORS errors in the browser console?
+3. Is the `userId` in your config correct?
+4. Does your backend return notifications in the correct format?
+
 ## API Reference
 
 ### SSEProvider Props

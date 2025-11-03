@@ -6,7 +6,6 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    // dts plugin disabled - using manual index.d.ts instead
   ],
   build: {
     lib: {

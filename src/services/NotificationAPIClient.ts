@@ -58,7 +58,11 @@ export class NotificationAPIClient {
    */
   async getHistory(userId: string): Promise<Notification[]> {
     const response = await this.get(`/notifications/user/${userId}/history`);
-    return response.data || [];
+    // Handle both direct array response and wrapped response
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return response.data || response.notifications || [];
   }
 
   /**

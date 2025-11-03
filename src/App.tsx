@@ -12,7 +12,7 @@ import './App.css';
 // Configuration for your SSE connection
 const config: SSEConfig = {
   apiUrl: 'http://localhost:3000', // Your backend URL
-  userId: 'test-user-123',         // Current user ID
+  userId: 'john_doe',         // Current user ID
   departmentIds: ['sales', 'engineering'], // Optional departments
   autoConnect: true,
   autoReconnect: true,
@@ -47,7 +47,21 @@ function NotificationDemo() {
       .catch(error => {
         console.warn('⚠️ Browser notifications not supported:', error);
       });
+
+    // Debug: Test API endpoint directly
+    testAPIEndpoint();
   }, []);
+
+  // Debug helper to test the API endpoint
+  const testAPIEndpoint = async () => {
+    try {
+      const response = await fetch(`${config.apiUrl}/notifications/user/${config.userId}/history`);
+      const data = await response.json();
+      console.log('🧪 API Test - GET /notifications/user/john_doe/history:', data);
+    } catch (error) {
+      console.error('🧪 API Test Failed:', error);
+    }
+  };
 
   // Test functions to send notifications
   const sendTestNotification = async () => {
