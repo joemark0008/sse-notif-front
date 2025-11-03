@@ -44,6 +44,10 @@ export interface SSEConfig {
   apiUrl: string;
   /** User ID subscribing to notifications */
   userId: string;
+  /** API key for authentication (required for API calls) */
+  appKey: string;
+  /** API secret for authentication (required for API calls) */
+  appSecret: string;
   /** Optional department IDs (comma-separated or array) */
   departmentIds?: string | string[];
   /** Auto-connect on mount (default: true) */

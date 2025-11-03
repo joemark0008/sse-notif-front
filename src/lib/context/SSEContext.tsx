@@ -61,8 +61,16 @@ export function SSEProvider({
       url += `&departmentIds=${encodeURIComponent(departments)}`;
     }
     
+    // Add authentication parameters as query strings for EventSource
+    if (config.appKey) {
+      url += `&appKey=${encodeURIComponent(config.appKey)}`;
+    }
+    if (config.appSecret) {
+      url += `&appSecret=${encodeURIComponent(config.appSecret)}`;
+    }
+    
     return url;
-  }, [config.apiUrl, config.userId, config.departmentIds]);
+  }, [config.apiUrl, config.userId, config.departmentIds, config.appKey, config.appSecret]);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -186,6 +194,7 @@ export function SSEProvider({
 
     try {
       const url = buildSSEUrl();
+      console.log('🔗 Connecting to SSE URL:', url);
       const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
 
@@ -259,7 +268,7 @@ export function SSEProvider({
         console.log('📥 Fetching initial notifications from API...');
         console.log('   Endpoint: GET', `${config.apiUrl}/notifications/user/${config.userId}/history`);
         
-        const apiClient = new NotificationAPIClient(config.apiUrl);
+        const apiClient = new NotificationAPIClient(config.apiUrl, config.appKey, config.appSecret);
         const initialNotifications = await apiClient.getHistory(config.userId);
         
         console.log('   Response received:', initialNotifications);

@@ -290,6 +290,8 @@ If notifications don't appear, check:
 interface SSEConfig {
   apiUrl: string;                    // Base API URL
   userId: string;                    // User ID for notifications
+  appKey: string;                    // API key for authentication (required)
+  appSecret: string;                 // API secret for authentication (required)
   departmentIds?: string | string[]; // Department IDs (optional)
   autoConnect?: boolean;             // Auto-connect on mount (default: true)
   autoReconnect?: boolean;           // Auto-reconnect on disconnect (default: true)
@@ -298,6 +300,68 @@ interface SSEConfig {
   maxReconnectDelay?: number;        // Max reconnect delay in ms (default: 30000)
 }
 ```
+
+### Authentication Configuration
+
+The library requires API key authentication for secure communication with the backend. Both `appKey` and `appSecret` are **required** in your configuration.
+
+#### SSE Subscribe Connection
+
+The SSE subscribe URL includes authentication parameters as query strings (due to EventSource API limitations):
+
+```
+GET {{base_url}}/notifications/subscribe?userId=john_doe&departmentIds=sales,engineering&appKey={{app_key}}&appSecret={{app_secret}}
+```
+
+**Example:**
+```
+http://localhost:3000/notifications/subscribe?userId=john_doe&departmentIds=sales,engineering&appKey=abc123&appSecret=xyz789
+```
+
+#### API Requests (Other Endpoints)
+
+All other API requests (sending notifications, fetching history, etc.) require authentication headers:
+
+```
+Header: x-app-key: {{app_key}}
+Header: x-app-secret: {{app_secret}}
+```
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:3000/notifications/user/john_doe \
+  -H "x-app-key: abc123" \
+  -H "x-app-secret: xyz789" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"info","title":"Hello","message":"Test notification"}'
+```
+
+#### Configuration Example with Authentication
+
+```typescript
+const config: SSEConfig = {
+  apiUrl: 'http://localhost:3000',
+  userId: 'john_doe',
+  appKey: 'your-api-key',           // Required
+  appSecret: 'your-api-secret',     // Required
+  departmentIds: ['sales', 'engineering'],
+  autoConnect: true,
+  autoReconnect: true
+};
+
+export default function App() {
+  return (
+    <SSEProvider config={config}>
+      <YourAppComponents />
+    </SSEProvider>
+  );
+}
+```
+
+The library automatically:
+- Includes `appKey` and `appSecret` as query parameters in the SSE subscribe URL
+- Includes `x-app-key` and `x-app-secret` headers in all API requests
+
 
 ### Hooks
 

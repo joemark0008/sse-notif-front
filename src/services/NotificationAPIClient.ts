@@ -13,9 +13,13 @@ import type {
  */
 export class NotificationAPIClient {
   private baseUrl: string;
+  private appKey?: string;
+  private appSecret?: string;
 
-  constructor(apiUrl: string) {
+  constructor(apiUrl: string, appKey?: string, appSecret?: string) {
     this.baseUrl = apiUrl;
+    this.appKey = appKey;
+    this.appSecret = appSecret;
   }
 
   /**
@@ -152,10 +156,28 @@ export class NotificationAPIClient {
   }
 
   /**
+   * Get request headers with API key authentication
+   */
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (this.appKey && this.appSecret) {
+      headers['x-app-key'] = this.appKey;
+      headers['x-app-secret'] = this.appSecret;
+    }
+
+    return headers;
+  }
+
+  /**
    * Private helper for GET requests
    */
   private async get(endpoint: string) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`);
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      headers: this.getHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
@@ -168,9 +190,7 @@ export class NotificationAPIClient {
   private async post(endpoint: string, body: any) {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify(body),
     });
     if (!response.ok) {

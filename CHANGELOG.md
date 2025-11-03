@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-11-03
+
+### Added
+- **API Key Authentication**: Required `appKey` and `appSecret` fields in `SSEConfig`
+- **Authentication Headers**: All API requests now include `x-app-key` and `x-app-secret` headers
+- **SSE Query Parameters**: SSE connection now includes `appKey` and `appSecret` query parameters
+- **Authentication Documentation**: Comprehensive README section explaining authentication setup
+
+### Changed
+- **Breaking Change**: `appKey` and `appSecret` are now **required** fields in `SSEConfig` (no longer optional)
+- **NotificationAPIClient**: Constructor now requires `appKey` and `appSecret` parameters
+- **useNotificationAPI**: Updated to pass credentials from config to API client
+- **useNotifications**: Updated to pass credentials from config to API client
+- **SSEContext**: Updated to include credentials in SSE subscribe URL and API client initialization
+
+### Fixed
+- Proper authentication support for backends with API key guards
+
+## [1.0.8] - 2025-11-03
+
+### Added
+- **Notification Persistence Documentation**: Updated README with "Notification Persistence" section
+- **CHANGELOG.md**: Created comprehensive changelog documenting all versions
+
+### Changed
+- Updated README with detailed notification persistence explanation
+
 ## [1.0.7] - 2025-11-03
 
 ### Fixed
@@ -113,9 +140,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Release Date | Status |
 |---------|------------|--------|
-| 1.0.7 | 2025-11-03 | Latest |
-| 1.0.6 | 2025-11-03 | Stable |
-| 1.0.5 | 2025-11-03 | Stable |
+| 1.0.9 | 2025-11-03 | Latest |
+| 1.0.8 | 2025-11-03 | Stable |
+| 1.0.7 | 2025-11-03 | Stable |
 | 1.0.4 | 2025-11-03 | Stable |
 | 1.0.3 | 2025-11-03 | Stable |
 | 1.0.2 | 2025-11-03 | Stable |

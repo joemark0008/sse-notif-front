@@ -22,8 +22,8 @@ export function useNotificationAPI(): UseNotificationAPIReturn {
 
   // Memoize the API client to prevent recreation on every render
   const apiClient = useMemo(() => {
-    return config ? new NotificationAPIClient(config.apiUrl) : null;
-  }, [config?.apiUrl]);
+    return config ? new NotificationAPIClient(config.apiUrl, config.appKey, config.appSecret) : null;
+  }, [config?.apiUrl, config?.appKey, config?.appSecret]);
 
   const executeAPICall = useCallback(async <T>(
     operation: () => Promise<T>

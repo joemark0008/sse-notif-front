@@ -1,7 +1,7 @@
 import { useCallback, useState, useMemo } from 'react';
 import { useSSEContext } from '../context/SSEContext';
 import { NotificationAPIClient } from '../../services/NotificationAPIClient';
-import type { UseNotificationsReturn, NotificationStats } from '../../types';
+import type { UseNotificationsReturn } from '../../types';
 
 /**
  * Hook for managing notifications state and actions
@@ -15,14 +15,13 @@ export function useNotifications(): UseNotificationsReturn {
     markAsRead: contextMarkAsRead,
   } = useSSEContext();
 
-  const [stats, setStats] = useState<NotificationStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   // Memoize the API client to prevent recreation on every render
   const apiClient = useMemo(() => {
-    return config ? new NotificationAPIClient(config.apiUrl) : null;
-  }, [config?.apiUrl]);
+    return config ? new NotificationAPIClient(config.apiUrl, config.appKey, config.appSecret) : null;
+  }, [config?.apiUrl, config?.appKey, config?.appSecret]);
 
   const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
     if (!apiClient || !config) {
@@ -120,7 +119,7 @@ export function useNotifications(): UseNotificationsReturn {
   return {
     notifications,
     unreadCount,
-    stats,
+    stats: null,
     isLoading,
     error,
     markAsRead,

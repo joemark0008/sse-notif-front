@@ -10,9 +10,13 @@ import type { SSEConfig } from '@joemark0008/sse-notifications-react';
 import './App.css';
 
 // Configuration for your SSE connection
+// NOTE: Update apiUrl to match your backend server
+// The backend should be running at http://localhost:3000 with the hisd3-sse-notif server
 const config: SSEConfig = {
-  apiUrl: 'http://localhost:3000', // Your backend URL
+  apiUrl: 'http://localhost:3000', // Your backend URL - Update if server is on different host/port
   userId: 'john_doe',         // Current user ID
+  appKey: '4fef1eddf549e17682d052a0d9231b0b',     // API key for authentication
+  appSecret: 'fe04fe12e11f10cb311bad89770c08fb', // API secret for authentication
   departmentIds: ['sales', 'engineering'], // Optional departments
   autoConnect: true,
   autoReconnect: true,
@@ -52,14 +56,23 @@ function NotificationDemo() {
     testAPIEndpoint();
   }, []);
 
-  // Debug helper to test the API endpoint
+  // Debug helper to test the API endpoint with authentication headers
   const testAPIEndpoint = async () => {
     try {
-      const response = await fetch(`${config.apiUrl}/notifications/user/${config.userId}/history`);
+      console.log('🧪 Testing API with authentication headers...');
+      const response = await fetch(`${config.apiUrl}/notifications/user/${config.userId}/history`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-key': config.appKey,
+          'x-app-secret': config.appSecret,
+        },
+      });
       const data = await response.json();
-      console.log('🧪 API Test - GET /notifications/user/john_doe/history:', data);
+      console.log('✅ API Test - GET /notifications/user/john_doe/history:', data);
+      console.log('📝 Response:', data);
     } catch (error) {
-      console.error('🧪 API Test Failed:', error);
+      console.error('❌ API Test Failed:', error);
     }
   };
 
@@ -140,7 +153,26 @@ function NotificationDemo() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '1000px' }}>
-      <h1>🔔 SSE Notifications Test - Mark as Read Demo</h1>
+      <h1>🔔 SSE Notifications Test - With API Key Authentication</h1>
+      
+      {/* Authentication Configuration Info */}
+      <div style={{ 
+        marginBottom: '20px', 
+        padding: '15px', 
+        background: '#e7f3ff', 
+        borderRadius: '8px',
+        border: '1px solid #b3d9ff'
+      }}>
+        <h3>🔐 Authentication Configuration</h3>
+        <p><strong>API URL:</strong> {config.apiUrl}</p>
+        <p><strong>User ID:</strong> {config.userId}</p>
+        <p><strong>API Key:</strong> {config.appKey.substring(0, 8)}...{config.appKey.substring(config.appKey.length - 8)}</p>
+        <p><strong>API Secret:</strong> {config.appSecret.substring(0, 8)}...{config.appSecret.substring(config.appSecret.length - 8)}</p>
+        <p><strong>Departments:</strong> {Array.isArray(config.departmentIds) ? config.departmentIds.join(', ') : config.departmentIds}</p>
+        <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
+          💡 All API calls include x-app-key and x-app-secret headers for secure authentication
+        </p>
+      </div>
       
       {/* Connection Status */}
       <div style={{ 
@@ -187,6 +219,35 @@ function NotificationDemo() {
             Disconnect
           </button>
         </div>
+      </div>
+
+      {/* Test API Authentication */}
+      <div style={{ 
+        marginBottom: '20px', 
+        padding: '15px', 
+        background: '#f0f0f0', 
+        borderRadius: '8px'
+      }}>
+        <h3>🧪 Test API Authentication</h3>
+        <p style={{ fontSize: '14px', color: '#666' }}>
+          Test that your API credentials are working correctly with the backend server.
+        </p>
+        <button 
+          onClick={testAPIEndpoint}
+          style={{ 
+            padding: '10px 16px', 
+            background: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          🔗 Test API Connection with Headers
+        </button>
+        <p style={{ fontSize: '12px', color: '#999', marginTop: '10px' }}>
+          Check browser console for results. This will send: GET /notifications/user/{'{userId}'}/history with x-app-key and x-app-secret headers
+        </p>
       </div>
 
       {/* Send Test Notifications */}
