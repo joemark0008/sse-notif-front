@@ -1,6 +1,6 @@
 {
   "name": "@joemark0008/sse-notifications-react",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "React package for managing SSE (Server-Sent Events) notifications with hooks and provider",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
@@ -20,7 +20,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:lib": "vite build",
+    "build:lib": "vite build && npm run gen:types",
+    "gen:types": "node scripts/generate-types.js",
     "preview": "vite preview",
     "lint": "eslint .",
     "prepublishOnly": "npm run build:lib",
@@ -58,7 +59,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/joemark0008/sse-notifications-react"
+    "url": "git+https://github.com/joemark0008/sse-notifications-react.git"
   },
   "bugs": {
     "url": "https://github.com/joemark0008/sse-notifications-react/issues"

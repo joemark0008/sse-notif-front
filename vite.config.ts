@@ -1,19 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    dts({
-      insertTypesEntry: true,
-      include: ['src/index.ts', 'src/lib/**/*', 'src/types.ts', 'src/services/**/*'],
-      exclude: ['src/**/*.test.*', 'src/**/*.spec.*', 'src/main.tsx', 'src/App.tsx'],
-      outDir: 'dist',
-      copyDtsFiles: true,
-    }),
+    // dts plugin disabled - using manual index.d.ts instead
   ],
   build: {
     lib: {
