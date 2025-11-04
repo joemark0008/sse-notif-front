@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-11-04
+
+### Added
+- **Delete Notification Functionality**: Added proper `deleteNotification` function to SSEContext
+- **Improved State Management**: Notifications are now properly removed from state when deleted
+- **Unread Count Updates**: Unread count correctly decreases when deleting unread notifications
+
+### Fixed
+- **Delete Bug**: Fixed issue where `deleteNotification` was only marking as read instead of removing from UI
+- **Context Integration**: `useNotifications` hook now properly calls context's delete function
+- **State Synchronization**: Notification deletion now correctly updates both notifications array and unread count
+
+### Changed
+- **Documentation**: Completely restructured README with simpler examples and better organization
+  - Added clear Quick Start section with complete working example
+  - Added Complete Setup Guide with step-by-step instructions
+  - Added practical Advanced Examples (notification bell, router integration, etc.)
+  - Added Troubleshooting section for common issues
+  - Simplified Authentication and Persistence explanations
+  - Added What's New section highlighting v1.1.0 changes
+
 ## [1.1.0] - 2025-11-04
 
 ### Changed
