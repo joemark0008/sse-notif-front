@@ -1,0 +1,549 @@
+{
+  "info": {
+    "name": "Notification System API - Refactored Architecture",
+    "description": "Complete API collection for testing user and department notification system with centralized SSE management. User endpoints: /user-notifications/*, Department endpoints: /department-notifications/*, SSE subscription: /notifications/subscribe",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "app_key",
+      "value": "test-app-key",
+      "type": "string"
+    },
+    {
+      "key": "app_secret",
+      "value": "test-app-secret",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "user123",
+      "type": "string"
+    },
+    {
+      "key": "department_id",
+      "value": "sales",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Authentication",
+      "item": [
+        {
+          "name": "Create Auth App",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Application\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth-app",
+              "host": ["{{base_url}}"],
+              "path": ["auth-app"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Auth Apps",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth-app",
+              "host": ["{{base_url}}"],
+              "path": ["auth-app"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1. SSE Subscription",
+      "item": [
+        {
+          "name": "Subscribe to User Notifications Only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/subscribe?userId={{user_id}}&appKey={{app_key}}&appSecret={{app_secret}}",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "subscribe"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{user_id}}"
+                },
+                {
+                  "key": "appKey",
+                  "value": "{{app_key}}"
+                },
+                {
+                  "key": "appSecret",
+                  "value": "{{app_secret}}"
+                }
+              ]
+            },
+            "description": "Subscribe to personal user notifications only. Keep this connection open to receive real-time notifications."
+          },
+          "response": []
+        },
+        {
+          "name": "Subscribe to User + Department Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/subscribe?userId={{user_id}}&departmentIds=sales,hr,engineering&appKey={{app_key}}&appSecret={{app_secret}}",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "subscribe"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{user_id}}"
+                },
+                {
+                  "key": "departmentIds",
+                  "value": "sales,hr,engineering",
+                  "description": "Comma-separated list of department IDs"
+                },
+                {
+                  "key": "appKey",
+                  "value": "{{app_key}}"
+                },
+                {
+                  "key": "appSecret",
+                  "value": "{{app_secret}}"
+                }
+              ]
+            },
+            "description": "Subscribe to both personal and multiple department notifications. The SSE stream will merge both sources."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. User Notifications",
+      "item": [
+        {
+          "name": "Send Notification to User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save notification ID for later use",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.jobId) {",
+                  "        console.log('Job ID:', jsonData.jobId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"info\",\n  \"title\": \"Welcome!\",\n  \"message\": \"This is a personal notification for you.\",\n  \"data\": {\n    \"action\": \"view_profile\",\n    \"userId\": \"{{user_id}}\"\n  },\n  \"icon\": \"bell\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-notifications/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "{{user_id}}"]
+            },
+            "description": "Send a notification to a specific user. If user is online, they receive it immediately via SSE. If offline, it waits for them."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Notification History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-notifications/{{user_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "{{user_id}}", "history"]
+            },
+            "description": "Get all notifications for a user (read, unread, waiting, delivered)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-notifications/{{user_id}}/unread-count",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "{{user_id}}", "unread-count"]
+            },
+            "description": "Get the count of unread notifications for a user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-notifications/{{user_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "{{user_id}}", "stats"]
+            },
+            "description": "Get notification statistics: total, waiting, delivered, read, unread"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-notifications/{{notification_id}}/read",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "{{notification_id}}", "read"]
+            },
+            "description": "Mark a specific notification as read. Set {{notification_id}} variable first."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-notifications/{{user_id}}/mark-all-read",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "{{user_id}}", "mark-all-read"]
+            },
+            "description": "Mark all notifications as read for a user"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Department Notifications",
+      "item": [
+        {
+          "name": "Broadcast to Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"announcement\",\n  \"title\": \"Team Meeting\",\n  \"message\": \"All sales team members, please join the meeting at 3 PM.\",\n  \"data\": {\n    \"meetingId\": \"meeting-123\",\n    \"time\": \"3:00 PM\",\n    \"room\": \"Conference Room A\"\n  },\n  \"icon\": \"calendar\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/department-notifications/{{department_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["department-notifications", "{{department_id}}"]
+            },
+            "description": "Broadcast a notification to all users subscribed to this department. No read tracking, just live broadcast."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Department History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/department-notifications/{{department_id}}/history?limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["department-notifications", "{{department_id}}", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Number of notifications to retrieve"
+                }
+              ]
+            },
+            "description": "Get notification history for a department (for reference, no read status)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Testing Scenarios",
+      "item": [
+        {
+          "name": "Test - Send Success Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"success\",\n  \"title\": \"Order Completed\",\n  \"message\": \"Your order #12345 has been successfully processed.\",\n  \"data\": {\n    \"orderId\": \"12345\",\n    \"amount\": 99.99\n  },\n  \"icon\": \"check-circle\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-notifications/user123",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "user123"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test - Send Error Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"error\",\n  \"title\": \"Payment Failed\",\n  \"message\": \"Your payment could not be processed. Please try again.\",\n  \"data\": {\n    \"error\": \"insufficient_funds\"\n  },\n  \"icon\": \"alert-circle\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-notifications/user123",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "user123"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test - Critical Department Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"critical\",\n  \"title\": \"System Maintenance\",\n  \"message\": \"Emergency system maintenance will begin in 10 minutes. Please save your work.\",\n  \"data\": {\n    \"downtime\": \"30 minutes\",\n    \"startTime\": \"2025-11-04T15:00:00Z\"\n  },\n  \"icon\": \"alert-triangle\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/department-notifications/engineering",
+              "host": ["{{base_url}}"],
+              "path": ["department-notifications", "engineering"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test - Offline User (Send 3 Notifications)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"info\",\n  \"title\": \"Notification {{$randomInt}}\",\n  \"message\": \"This notification was sent while you were offline.\",\n  \"icon\": \"bell\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-notifications/offline-user",
+              "host": ["{{base_url}}"],
+              "path": ["user-notifications", "offline-user"]
+            },
+            "description": "Send to a user who is not subscribed. These will be waiting for them when they connect."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Debug & Monitoring",
+      "item": [
+        {
+          "name": "Get Connected Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-app-key",
+                "value": "{{app_key}}"
+              },
+              {
+                "key": "x-app-secret",
+                "value": "{{app_secret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/debug/connected-users",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "debug", "connected-users"]
+            },
+            "description": "See all connected users and their department subscriptions"
+          },
+          "response": []
+        },
+        {
+          "name": "BullBoard Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/queues",
+              "host": ["{{base_url}}"],
+              "path": ["queues"]
+            },
+            "description": "Open BullBoard dashboard to monitor queue jobs"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

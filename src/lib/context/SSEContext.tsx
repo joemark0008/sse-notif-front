@@ -1,21 +1,14 @@
 import { createContext, useContext, useCallback, useRef, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { SSEConfig, SSEConnectionState, Notification } from '../../types';
-import { NotificationAPIClient } from '../../services/NotificationAPIClient';
 
 interface SSEContextValue {
   config: SSEConfig | null;
   connectionState: SSEConnectionState;
   isConnected: boolean;
   error: Error | null;
-  notifications: Notification[];
-  unreadCount: number;
   connect: () => void;
   disconnect: () => void;
-  addNotification: (notification: Notification) => void;
-  markAsRead: (notificationId: string) => void;
-  deleteNotification: (notificationId: string) => void;
-  clearNotifications: () => void;
 }
 
 const SSEContext = createContext<SSEContextValue | null>(null);
@@ -41,8 +34,6 @@ export function SSEProvider({
 }: SSEProviderProps) {
   const [connectionState, setConnectionState] = useState<SSEConnectionState>('idle');
   const [error, setError] = useState<Error | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,14 +45,14 @@ export function SSEProvider({
   const buildSSEUrl = useCallback(() => {
     const baseUrl = config.apiUrl.replace(/\/$/, '');
     let url = `${baseUrl}/notifications/subscribe?userId=${encodeURIComponent(config.userId)}`;
-    
+
     if (config.departmentIds) {
-      const departments = Array.isArray(config.departmentIds) 
+      const departments = Array.isArray(config.departmentIds)
         ? config.departmentIds.join(',')
         : config.departmentIds;
       url += `&departmentIds=${encodeURIComponent(departments)}`;
     }
-    
+
     // Add authentication parameters as query strings for EventSource
     if (config.appKey) {
       url += `&appKey=${encodeURIComponent(config.appKey)}`;
@@ -69,7 +60,7 @@ export function SSEProvider({
     if (config.appSecret) {
       url += `&appSecret=${encodeURIComponent(config.appSecret)}`;
     }
-    
+
     return url;
   }, [config.apiUrl, config.userId, config.departmentIds, config.appKey, config.appSecret]);
 
@@ -132,53 +123,9 @@ export function SSEProvider({
     }
   }, [enableBrowserNotifications]);
 
-  const addNotification = useCallback((notification: Notification) => {
-    console.log('New notification:', notification);
-    setNotifications(prev => [notification, ...prev]);
-    if (!notification.read) {
-      setUnreadCount(prev => prev + 1);
-    }
-    
-    // Show browser notification
-    showBrowserNotification(notification);
-    
-    // Call user-provided callback
-    onNotification?.(notification);
-  }, [onNotification, showBrowserNotification]);
-
-  const markAsRead = useCallback((notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId 
-          ? { ...notif, read: true }
-          : notif
-      )
-    );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  }, []);
-
-  const deleteNotification = useCallback((notificationId: string) => {
-    setNotifications(prev => {
-      const notification = prev.find(n => n.id === notificationId);
-      const newNotifications = prev.filter(notif => notif.id !== notificationId);
-      
-      // If the deleted notification was unread, decrease the unread count
-      if (notification && !notification.read) {
-        setUnreadCount(count => Math.max(0, count - 1));
-      }
-      
-      return newNotifications;
-    });
-  }, []);
-
-  const clearNotifications = useCallback(() => {
-    setNotifications([]);
-    setUnreadCount(0);
-  }, []);
-
   const scheduleReconnect = useCallback(() => {
     if (!config.autoReconnect) return;
-    
+
     const maxAttempts = config.maxReconnectAttempts ?? -1;
     if (maxAttempts !== -1 && reconnectAttemptsRef.current >= maxAttempts) {
       console.warn('Max reconnection attempts reached');
@@ -186,11 +133,11 @@ export function SSEProvider({
     }
 
     clearReconnectTimeout();
-    
+
     reconnectTimeoutRef.current = setTimeout(() => {
       reconnectAttemptsRef.current++;
       connect();
-      
+
       // Exponential backoff
       reconnectDelayRef.current = Math.min(
         reconnectDelayRef.current * 2,
@@ -220,7 +167,13 @@ export function SSEProvider({
       eventSource.onmessage = (event) => {
         try {
           const notification: Notification = JSON.parse(event.data);
-          addNotification(notification);
+          console.log('📨 SSE notification received:', notification);
+
+          // Show browser notification if enabled
+          showBrowserNotification(notification);
+
+          // Call user-provided callback
+          onNotification?.(notification);
         } catch (err) {
           console.error('Failed to parse SSE message:', err);
         }
@@ -230,7 +183,7 @@ export function SSEProvider({
         console.log('❌ SSE connection error:', event);
         const error = new Error('SSE connection error');
         handleError(error);
-        
+
         // Schedule reconnect on error
         if (config.autoReconnect !== false) {
           scheduleReconnect();
@@ -241,7 +194,13 @@ export function SSEProvider({
       eventSource.addEventListener('notification', (event) => {
         try {
           const notification: Notification = JSON.parse(event.data);
-          addNotification(notification);
+          console.log('📨 SSE notification event:', notification);
+
+          // Show browser notification if enabled
+          showBrowserNotification(notification);
+
+          // Call user-provided callback
+          onNotification?.(notification);
         } catch (err) {
           console.error('Failed to parse notification event:', err);
         }
@@ -260,59 +219,32 @@ export function SSEProvider({
     config.autoReconnect,
     handleConnect,
     handleError,
-    addNotification,
+    showBrowserNotification,
+    onNotification,
     scheduleReconnect,
   ]);
 
   const disconnect = useCallback(() => {
     clearReconnectTimeout();
-    
+
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
-    
+
     handleDisconnect();
   }, [clearReconnectTimeout, handleDisconnect]);
 
   // Auto-connect on mount if enabled
   useEffect(() => {
-    const initializeNotifications = async () => {
-      // First, fetch initial notifications from API
-      try {
-        console.log('📥 Fetching initial notifications from API...');
-        console.log('   Endpoint: GET', `${config.apiUrl}/user-notifications/${config.userId}/history`);
-        
-        const apiClient = new NotificationAPIClient(config.apiUrl, config.appKey, config.appSecret);
-        const initialNotifications = await apiClient.getHistory(config.userId);
-        
-        console.log('   Response received:', initialNotifications);
-        
-        if (initialNotifications && initialNotifications.length > 0) {
-          setNotifications(initialNotifications);
-          const unread = initialNotifications.filter(n => !n.read).length;
-          setUnreadCount(unread);
-          console.log(`✅ Loaded ${initialNotifications.length} notifications (${unread} unread)`);
-        } else {
-          console.log('📭 No notifications found in history (empty or null)');
-        }
-      } catch (err) {
-        console.error('❌ Failed to fetch initial notifications:', err);
-        // Continue anyway, SSE will still work
-      }
-      
-      // Then, connect to SSE for real-time updates
-      if (config.autoConnect !== false) {
-        connect();
-      }
-    };
-
-    initializeNotifications();
+    if (config.autoConnect !== false) {
+      connect();
+    }
 
     return () => {
       disconnect();
     };
-  }, [config.autoConnect, config.apiUrl, config.userId, connect, disconnect]);
+  }, [config.autoConnect]); // Only depend on autoConnect to avoid unnecessary reconnections
 
   // Cleanup on unmount
   useEffect(() => {
@@ -329,14 +261,8 @@ export function SSEProvider({
     connectionState,
     isConnected,
     error,
-    notifications,
-    unreadCount,
     connect,
     disconnect,
-    addNotification,
-    markAsRead,
-    deleteNotification,
-    clearNotifications,
   };
 
   return (

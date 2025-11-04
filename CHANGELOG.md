@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [2.0.0] - 2025-11-04
+
+### Major Change: Simplified to SSE Only
+- Removed all API client integration and TanStack Query hooks
+- Only SSEProvider, useSSE, useNotifications, and simple config remain
+- All advanced features, mutation/query hooks, and API client code deleted
+
+### Usage
+```tsx
+import { SSEProvider, useSSE, useNotifications } from '@joemark0008/sse-notifications-react';
+import type { SSEConfig } from '@joemark0008/sse-notifications-react';
+
+const config: SSEConfig = {
+  apiUrl: 'http://localhost:3000',
+  userId: 'john_doe',
+  departmentIds: ['456', '789'],
+  autoConnect: true,
+};
+
+function NotificationDemo() {
+  const { isConnected, connectionState, connect, disconnect } = useSSE();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  // ... UI code ...
+}
+
+export default function App() {
+  return (
+    <SSEProvider config={config}>
+      <NotificationDemo />
+    </SSEProvider>
+  );
+}
+```
+
+### Added
+- **TanStack Query Integration**: Added complete integration with @tanstack/react-query for better data fetching and caching
+- **New Query Hooks**: 
+  - `useNotificationHistory()` - Fetch and cache notification history with automatic refetching
+  - `useNotificationStats()` - Fetch and cache notification statistics
+  - `useUnreadCount()` - Auto-refreshing unread count (refetches every 30s)
+  - `useDepartmentHistory()` - Fetch department notification history
+  - `useDepartmentSubscribers()` - Fetch department subscriber count
+- **New Mutation Hooks**:
+  - `useMarkAsReadMutation()` - Mark as read with optimistic updates
+  - `useMarkAllAsReadMutation()` - Mark all as read with automatic cache invalidation
+  - `useDeleteNotificationMutation()` - Delete with optimistic updates
+  - `useDeleteOldNotificationsMutation()` - Bulk delete old notifications
+- **Query Keys Export**: `notificationKeys` object for advanced cache management
+- **Automatic Cache Invalidation**: Mutations automatically invalidate relevant queries
+- **Background Refetching**: Queries stay fresh with configurable stale times
+
+### Changed
+- **Peer Dependencies**: Added `@tanstack/react-query` ^5.0.0 as peer dependency
+- **Demo App**: Updated to demonstrate TanStack Query features side-by-side with traditional hooks
+- **Config Stability**: Fixed config object recreation issue causing unnecessary re-fetches
+
+### Benefits
+- ⚡ **Better Performance**: Automatic caching reduces unnecessary API calls
+- 🔄 **Auto-refresh**: Queries refetch in background to keep data fresh
+- 📊 **Loading States**: Built-in loading, error, and success states
+- 🎯 **Optimistic Updates**: Instant UI feedback with automatic rollback on errors
+- 🧹 **Smart Invalidation**: Related queries automatically refresh after mutations
+- 💾 **Persistent Cache**: Data persists across component unmounts
+
 ## [1.1.1] - 2025-11-04
 
 ### Added
