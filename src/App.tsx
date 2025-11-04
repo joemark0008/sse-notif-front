@@ -15,9 +15,9 @@ import './App.css';
 const config: SSEConfig = {
   apiUrl: 'http://localhost:3000', // Your backend URL - Update if server is on different host/port
   userId: 'john_doe',         // Current user ID
-  appKey: '4fef1eddf549e17682d052a0d9231b0b',     // API key for authentication
-  appSecret: 'fe04fe12e11f10cb311bad89770c08fb', // API secret for authentication
-  departmentIds: ['sales', 'engineering'], // Optional departments
+  appKey: '8fb26b0a568af89d66c0d729b1566cde',     // API key for authentication
+  appSecret: '0578a10a6ba4d71e8b963f29fc89d349', // API secret for authentication
+  departmentIds: ['456', '789'], // Optional departments
   autoConnect: true,
   autoReconnect: true,
   maxReconnectAttempts: 5,
@@ -36,9 +36,11 @@ function NotificationDemo() {
     isLoading: notifLoading 
   } = useNotifications();
   const { 
-    sendToUser, 
-    broadcast, 
-    sendToDepartment,
+    getHistory,
+    getStats,
+    getUnreadCount,
+    getDepartmentHistory,
+    getDepartmentSubscribers,
     isLoading: apiLoading 
   } = useNotificationAPI();
 
@@ -60,7 +62,7 @@ function NotificationDemo() {
   const testAPIEndpoint = async () => {
     try {
       console.log('🧪 Testing API with authentication headers...');
-      const response = await fetch(`${config.apiUrl}/notifications/user/${config.userId}/history`, {
+      const response = await fetch(`${config.apiUrl}/user-notifications/${config.userId}/history`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -69,71 +71,53 @@ function NotificationDemo() {
         },
       });
       const data = await response.json();
-      console.log('✅ API Test - GET /notifications/user/john_doe/history:', data);
+      console.log('✅ API Test - GET /user-notifications/${config.userId}/history:', data);
       console.log('📝 Response:', data);
     } catch (error) {
       console.error('❌ API Test Failed:', error);
     }
   };
 
-  // Test functions to send notifications
-  const sendTestNotification = async () => {
+  // Test API methods
+  const testGetStats = async () => {
     try {
-      await sendToUser('test-user-123', {
-        type: 'info',
-        title: 'Test Notification',
-        message: 'This is a test notification that you can mark as read!',
-        data: { testId: Date.now() },
-        icon: '🚀'
-      });
-      console.log('✅ Test notification sent!');
+      const stats = await getStats(config.userId);
+      console.log('✅ User Stats:', stats);
     } catch (error) {
-      console.error('❌ Failed to send notification:', error);
+      console.error('❌ Failed to get stats:', error);
     }
   };
 
-  const sendUrgentNotification = async () => {
+  const testGetUnreadCount = async () => {
     try {
-      await sendToUser('test-user-123', {
-        type: 'urgent',
-        title: 'URGENT: Action Required',
-        message: 'This urgent notification needs your immediate attention!',
-        data: { priority: 'high', actionRequired: true },
-        icon: '🚨'
-      });
-      console.log('✅ Urgent notification sent!');
+      const count = await getUnreadCount(config.userId);
+      console.log('✅ Unread Count:', count);
     } catch (error) {
-      console.error('❌ Failed to send urgent notification:', error);
+      console.error('❌ Failed to get unread count:', error);
     }
   };
 
-  const sendDepartmentNotification = async () => {
-    try {
-      await sendToDepartment('sales', {
-        type: 'announcement',
-        title: 'Team Meeting',
-        message: 'Sales team meeting scheduled for 3 PM today',
-        data: { meetingRoom: 'Conference A', time: '3:00 PM' },
-        icon: '📅'
-      });
-      console.log('✅ Department notification sent!');
-    } catch (error) {
-      console.error('❌ Failed to send department notification:', error);
+  const testDepartmentHistory = async () => {
+    if (config.departmentIds && config.departmentIds.length > 0) {
+      try {
+        const deptId = Array.isArray(config.departmentIds) ? config.departmentIds[0] : config.departmentIds;
+        const history = await getDepartmentHistory(deptId);
+        console.log(`✅ Department ${deptId} History:`, history);
+      } catch (error) {
+        console.error('❌ Failed to get department history:', error);
+      }
     }
   };
 
-  const sendBroadcastNotification = async () => {
-    try {
-      await broadcast({
-        type: 'system',
-        title: 'System Maintenance',
-        message: 'Scheduled maintenance tonight from 12 AM to 2 AM',
-        data: { maintenanceWindow: '12:00 AM - 2:00 AM' },
-        icon: '🔧'
-      });
-      console.log('✅ Broadcast notification sent!');
-    } catch (error) {
-      console.error('❌ Failed to send broadcast:', error);
+  const testDepartmentSubscribers = async () => {
+    if (config.departmentIds && config.departmentIds.length > 0) {
+      try {
+        const deptId = Array.isArray(config.departmentIds) ? config.departmentIds[0] : config.departmentIds;
+        const count = await getDepartmentSubscribers(deptId);
+        console.log(`✅ Department ${deptId} Subscribers:`, count);
+      } catch (error) {
+        console.error('❌ Failed to get department subscribers:', error);
+      }
     }
   };
 
@@ -246,25 +230,28 @@ function NotificationDemo() {
           🔗 Test API Connection with Headers
         </button>
         <p style={{ fontSize: '12px', color: '#999', marginTop: '10px' }}>
-          Check browser console for results. This will send: GET /notifications/user/{'{userId}'}/history with x-app-key and x-app-secret headers
+          Check browser console for results. This will send: GET /user-notifications/{'{userId}'}/history with x-app-key and x-app-secret headers
         </p>
       </div>
 
-      {/* Send Test Notifications */}
+      {/* Test API Methods */}
       <div style={{ 
         marginBottom: '20px', 
         padding: '15px', 
         background: '#e8f5e8', 
         borderRadius: '8px'
       }}>
-        <h3>📤 Send Test Notifications</h3>
+        <h3>📤 Test API Methods</h3>
+        <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+          Test the new API endpoints. Check browser console for results.
+        </p>
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
           gap: '10px' 
         }}>
           <button 
-            onClick={sendTestNotification} 
+            onClick={testGetStats} 
             disabled={apiLoading}
             style={{ 
               padding: '10px', 
@@ -275,26 +262,26 @@ function NotificationDemo() {
               cursor: apiLoading ? 'not-allowed' : 'pointer'
             }}
           >
-            {apiLoading ? '⏳ Sending...' : '📨 Send Test Notification'}
+            {apiLoading ? '⏳ Loading...' : '� Get User Stats'}
           </button>
           
           <button 
-            onClick={sendUrgentNotification} 
+            onClick={testGetUnreadCount} 
             disabled={apiLoading}
             style={{ 
               padding: '10px', 
-              background: '#dc3545',
+              background: '#17a2b8',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: apiLoading ? 'not-allowed' : 'pointer'
             }}
           >
-            {apiLoading ? '⏳ Sending...' : '🚨 Send Urgent Alert'}
+            {apiLoading ? '⏳ Loading...' : '� Get Unread Count'}
           </button>
           
           <button 
-            onClick={sendDepartmentNotification} 
+            onClick={testDepartmentHistory} 
             disabled={apiLoading}
             style={{ 
               padding: '10px', 
@@ -305,11 +292,11 @@ function NotificationDemo() {
               cursor: apiLoading ? 'not-allowed' : 'pointer'
             }}
           >
-            {apiLoading ? '⏳ Sending...' : '🏢 Send to Department'}
+            {apiLoading ? '⏳ Loading...' : '🏢 Get Dept History'}
           </button>
           
           <button 
-            onClick={sendBroadcastNotification} 
+            onClick={testDepartmentSubscribers} 
             disabled={apiLoading}
             style={{ 
               padding: '10px', 
@@ -320,7 +307,7 @@ function NotificationDemo() {
               cursor: apiLoading ? 'not-allowed' : 'pointer'
             }}
           >
-            {apiLoading ? '⏳ Broadcasting...' : '📢 Broadcast Message'}
+            {apiLoading ? '⏳ Loading...' : '� Get Dept Subscribers'}
           </button>
         </div>
       </div>

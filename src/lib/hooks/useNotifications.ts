@@ -13,6 +13,7 @@ export function useNotifications(): UseNotificationsReturn {
     notifications,
     unreadCount,
     markAsRead: contextMarkAsRead,
+    deleteNotification: contextDeleteNotification,
   } = useSSEContext();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -80,9 +81,8 @@ export function useNotifications(): UseNotificationsReturn {
       
       await apiClient.deleteNotification(notificationId);
       
-      // Note: In a real implementation, you might want to remove from local state
-      // For now, we'll just mark as read since deletion isn't handled in context
-      contextMarkAsRead(notificationId);
+      // Remove from local state
+      contextDeleteNotification(notificationId);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to delete notification');
       setError(error);
@@ -90,7 +90,7 @@ export function useNotifications(): UseNotificationsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [apiClient, config, contextMarkAsRead]);
+  }, [apiClient, config, contextDeleteNotification]);
 
   // Load initial stats - only run once when apiClient or userId changes
   // Commented out to prevent ERR_INSUFFICIENT_RESOURCES on initial load

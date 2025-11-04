@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-11-04
+
+### Changed
+- **Breaking Change**: Refactored API endpoints to match new backend structure
+  - User notifications now use `/user-notifications/*` endpoints
+  - Department notifications now use `/department-notifications/*` endpoints
+  - Removed sending notification methods (sendToUser, sendToUsers, sendToDepartment, etc.)
+- **NotificationAPIClient**: Updated all endpoints to new structure
+  - `GET /user-notifications/:userId/history` - Get notification history
+  - `GET /user-notifications/:userId/unread-count` - Get unread count
+  - `GET /user-notifications/:userId/stats` - Get user statistics
+  - `POST /user-notifications/:notificationId/read` - Mark as read
+  - `POST /user-notifications/:userId/mark-all-read` - Mark all as read
+  - `POST /user-notifications/:notificationId/delete` - Delete notification
+  - `POST /user-notifications/:userId/delete-old` - Delete old notifications
+  - `GET /department-notifications/:departmentId/history` - Get department history
+  - `GET /department-notifications/:departmentId/subscribers` - Get subscriber count
+- **useNotificationAPI Hook**: Simplified to only include data fetching methods
+  - Removed: sendToUser, sendToUsers, sendToDepartment, sendToMultipleDepartments, broadcast
+  - Removed: getWaiting, getDelivered, getAllNotifications, clearAllNotifications, getAdminQueues
+  - Added: getDepartmentHistory, getDepartmentSubscribers
+  - Kept: getHistory, getStats, getUnreadCount, deleteOldNotifications
+
+### Removed
+- Sending notification methods (moved to backend responsibility)
+- Admin queue management methods
+- Waiting/delivered notification endpoints
+
+### Fixed
+- SSE connection now properly uses query parameters for authentication
+- Updated SSEContext to fetch from correct endpoint
+
 ## [1.0.9] - 2025-11-03
 
 ### Added

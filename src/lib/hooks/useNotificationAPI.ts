@@ -3,11 +3,7 @@ import { useSSEContext } from '../context/SSEContext';
 import { NotificationAPIClient } from '../../services/NotificationAPIClient';
 import type { 
   UseNotificationAPIReturn,
-  SendNotificationBody,
-  SendBulkNotificationsBody,
-  SendMultipleDepartmentsBody,
   Notification,
-  NotificationsListResponse,
   NotificationStats
 } from '../../types';
 
@@ -45,54 +41,11 @@ export function useNotificationAPI(): UseNotificationAPIReturn {
     }
   }, [apiClient]);
 
-  const sendToUser = useCallback(async (
-    userId: string, 
-    notification: SendNotificationBody
-  ): Promise<any> => {
-    return executeAPICall(() => apiClient!.sendToUser(userId, notification));
-  }, [executeAPICall, apiClient]);
-
-  const sendToUsers = useCallback(async (
-    body: SendBulkNotificationsBody
-  ): Promise<any> => {
-    return executeAPICall(() => apiClient!.sendToUsers(body));
-  }, [executeAPICall, apiClient]);
-
-  const sendToDepartment = useCallback(async (
-    departmentId: string, 
-    notification: SendNotificationBody
-  ): Promise<any> => {
-    return executeAPICall(() => apiClient!.sendToDepartment(departmentId, notification));
-  }, [executeAPICall, apiClient]);
-
-  const sendToMultipleDepartments = useCallback(async (
-    body: SendMultipleDepartmentsBody
-  ): Promise<any> => {
-    return executeAPICall(() => apiClient!.sendToMultipleDepartments(body));
-  }, [executeAPICall, apiClient]);
-
-  const broadcast = useCallback(async (
-    notification: SendNotificationBody
-  ): Promise<any> => {
-    return executeAPICall(() => apiClient!.broadcast(notification));
-  }, [executeAPICall, apiClient]);
-
+  // User notification methods
   const getHistory = useCallback(async (
     userId: string
   ): Promise<Notification[]> => {
     return executeAPICall(() => apiClient!.getHistory(userId));
-  }, [executeAPICall, apiClient]);
-
-  const getWaiting = useCallback(async (
-    userId: string
-  ): Promise<NotificationsListResponse> => {
-    return executeAPICall(() => apiClient!.getWaiting(userId));
-  }, [executeAPICall, apiClient]);
-
-  const getDelivered = useCallback(async (
-    userId: string
-  ): Promise<NotificationsListResponse> => {
-    return executeAPICall(() => apiClient!.getDelivered(userId));
   }, [executeAPICall, apiClient]);
 
   const getStats = useCallback(async (
@@ -101,38 +54,38 @@ export function useNotificationAPI(): UseNotificationAPIReturn {
     return executeAPICall(() => apiClient!.getStats(userId));
   }, [executeAPICall, apiClient]);
 
+  const getUnreadCount = useCallback(async (
+    userId: string
+  ): Promise<number> => {
+    return executeAPICall(() => apiClient!.getUnreadCount(userId));
+  }, [executeAPICall, apiClient]);
+
   const deleteOldNotifications = useCallback(async (
     userId: string
   ): Promise<any> => {
     return executeAPICall(() => apiClient!.deleteOldNotifications(userId));
   }, [executeAPICall, apiClient]);
 
-  const getAllNotifications = useCallback(async (): Promise<Notification[]> => {
-    return executeAPICall(() => apiClient!.getAllNotifications());
+  // Department notification methods
+  const getDepartmentHistory = useCallback(async (
+    departmentId: string
+  ): Promise<Notification[]> => {
+    return executeAPICall(() => apiClient!.getDepartmentHistory(departmentId));
   }, [executeAPICall, apiClient]);
 
-  const clearAllNotifications = useCallback(async (): Promise<any> => {
-    return executeAPICall(() => apiClient!.clearAllNotifications());
-  }, [executeAPICall, apiClient]);
-
-  const getAdminQueues = useCallback(async (): Promise<any> => {
-    return executeAPICall(() => apiClient!.getAdminQueues());
+  const getDepartmentSubscribers = useCallback(async (
+    departmentId: string
+  ): Promise<number> => {
+    return executeAPICall(() => apiClient!.getDepartmentSubscribers(departmentId));
   }, [executeAPICall, apiClient]);
 
   return {
-    sendToUser,
-    sendToUsers,
-    sendToDepartment,
-    sendToMultipleDepartments,
-    broadcast,
     getHistory,
-    getWaiting,
-    getDelivered,
     getStats,
+    getUnreadCount,
     deleteOldNotifications,
-    getAllNotifications,
-    clearAllNotifications,
-    getAdminQueues,
+    getDepartmentHistory,
+    getDepartmentSubscribers,
     isLoading,
     error,
   };

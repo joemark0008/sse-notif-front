@@ -14,6 +14,7 @@ interface SSEContextValue {
   disconnect: () => void;
   addNotification: (notification: Notification) => void;
   markAsRead: (notificationId: string) => void;
+  deleteNotification: (notificationId: string) => void;
   clearNotifications: () => void;
 }
 
@@ -156,6 +157,20 @@ export function SSEProvider({
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 
+  const deleteNotification = useCallback((notificationId: string) => {
+    setNotifications(prev => {
+      const notification = prev.find(n => n.id === notificationId);
+      const newNotifications = prev.filter(notif => notif.id !== notificationId);
+      
+      // If the deleted notification was unread, decrease the unread count
+      if (notification && !notification.read) {
+        setUnreadCount(count => Math.max(0, count - 1));
+      }
+      
+      return newNotifications;
+    });
+  }, []);
+
   const clearNotifications = useCallback(() => {
     setNotifications([]);
     setUnreadCount(0);
@@ -266,7 +281,7 @@ export function SSEProvider({
       // First, fetch initial notifications from API
       try {
         console.log('📥 Fetching initial notifications from API...');
-        console.log('   Endpoint: GET', `${config.apiUrl}/notifications/user/${config.userId}/history`);
+        console.log('   Endpoint: GET', `${config.apiUrl}/user-notifications/${config.userId}/history`);
         
         const apiClient = new NotificationAPIClient(config.apiUrl, config.appKey, config.appSecret);
         const initialNotifications = await apiClient.getHistory(config.userId);
@@ -320,6 +335,7 @@ export function SSEProvider({
     disconnect,
     addNotification,
     markAsRead,
+    deleteNotification,
     clearNotifications,
   };
 

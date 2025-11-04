@@ -1,10 +1,6 @@
 import type {
-  SendNotificationBody,
-  SendBulkNotificationsBody,
-  SendMultipleDepartmentsBody,
   NotificationStats,
   Notification,
-  NotificationsListResponse,
 } from '../types';
 
 /**
@@ -23,45 +19,10 @@ export class NotificationAPIClient {
   }
 
   /**
-   * Send notification to single user
-   */
-  async sendToUser(userId: string, notification: SendNotificationBody) {
-    return this.post(`/notifications/user/${userId}`, notification);
-  }
-
-  /**
-   * Send notification to multiple users
-   */
-  async sendToUsers(body: SendBulkNotificationsBody) {
-    return this.post('/notifications/users', body);
-  }
-
-  /**
-   * Send notification to department
-   */
-  async sendToDepartment(departmentId: string, notification: SendNotificationBody) {
-    return this.post(`/notifications/department/${departmentId}`, notification);
-  }
-
-  /**
-   * Send notification to multiple departments
-   */
-  async sendToMultipleDepartments(body: SendMultipleDepartmentsBody) {
-    return this.post('/notifications/departments', body);
-  }
-
-  /**
-   * Broadcast notification to all users
-   */
-  async broadcast(notification: SendNotificationBody) {
-    return this.post('/notifications/broadcast', notification);
-  }
-
-  /**
    * Get notification history for user
    */
   async getHistory(userId: string): Promise<Notification[]> {
-    const response = await this.get(`/notifications/user/${userId}/history`);
+    const response = await this.get(`/user-notifications/${userId}/history`);
     // Handle both direct array response and wrapped response
     if (Array.isArray(response)) {
       return response;
@@ -70,89 +31,65 @@ export class NotificationAPIClient {
   }
 
   /**
-   * Get waiting (offline) notifications
-   */
-  async getWaiting(userId: string): Promise<NotificationsListResponse> {
-    return this.get(`/notifications/user/${userId}/waiting`);
-  }
-
-  /**
-   * Get delivered notifications
-   */
-  async getDelivered(userId: string): Promise<NotificationsListResponse> {
-    return this.get(`/notifications/user/${userId}/delivered`);
-  }
-
-  /**
-   * Get notification statistics
+   * Get notification statistics for user
    */
   async getStats(userId: string): Promise<NotificationStats> {
-    return this.get(`/notifications/user/${userId}/stats`);
+    return this.get(`/user-notifications/${userId}/stats`);
   }
 
   /**
-   * Get unread count
+   * Get unread count for user
    */
   async getUnreadCount(userId: string): Promise<number> {
-    const response = await this.get(`/notifications/user/${userId}/unread-count`);
-    return response.unreadCount || 0;
+    const response = await this.get(`/user-notifications/${userId}/unread-count`);
+    return response.unreadCount || response.count || 0;
   }
 
   /**
    * Mark notification as read
    */
   async markAsRead(notificationId: string) {
-    return this.post(`/notifications/${notificationId}/read`, {});
+    return this.post(`/user-notifications/${notificationId}/read`, {});
   }
 
   /**
-   * Mark all notifications as read
+   * Mark all notifications as read for user
    */
   async markAllAsRead(userId: string) {
-    return this.post(`/notifications/user/${userId}/mark-all-read`, {});
+    return this.post(`/user-notifications/${userId}/mark-all-read`, {});
   }
 
   /**
    * Delete notification
    */
   async deleteNotification(notificationId: string) {
-    return this.post(`/notifications/${notificationId}/delete`, {});
-  }
-
-  /**
-   * Get connected users
-   */
-  async getConnectedUsers() {
-    return this.get('/notifications/connected-users');
+    return this.post(`/user-notifications/${notificationId}/delete`, {});
   }
 
   /**
    * Delete old notifications for a user
    */
   async deleteOldNotifications(userId: string) {
-    return this.post(`/notifications/user/${userId}/delete-old`, {});
+    return this.post(`/user-notifications/${userId}/delete-old`, {});
   }
 
   /**
-   * Get all notifications (admin endpoint)
+   * Get department notification history
    */
-  async getAllNotifications(): Promise<Notification[]> {
-    const response = await this.get('/notifications/all');
-    return response.data || [];
+  async getDepartmentHistory(departmentId: string): Promise<Notification[]> {
+    const response = await this.get(`/department-notifications/${departmentId}/history`);
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return response.data || response.notifications || [];
   }
 
   /**
-   * Clear all notifications (admin endpoint)
+   * Get department subscribers count
    */
-  async clearAllNotifications() {
-    return this.post('/notifications/clear-all', {});
-  }
-
-  /**
-   * Get admin queue information
-   */
-  async getAdminQueues() {
-    return this.get('/admin/queues');
+  async getDepartmentSubscribers(departmentId: string): Promise<number> {
+    const response = await this.get(`/department-notifications/${departmentId}/subscribers`);
+    return response.count || response.subscribers || 0;
   }
 
   /**

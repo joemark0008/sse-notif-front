@@ -144,19 +144,17 @@ export interface UseSSEReturn {
  * Hook return type for useNotificationAPI
  */
 export interface UseNotificationAPIReturn {
-  sendToUser: (userId: string, notification: SendNotificationBody) => Promise<any>;
-  sendToUsers: (body: SendBulkNotificationsBody) => Promise<any>;
-  sendToDepartment: (departmentId: string, notification: SendNotificationBody) => Promise<any>;
-  sendToMultipleDepartments: (body: SendMultipleDepartmentsBody) => Promise<any>;
-  broadcast: (notification: SendNotificationBody) => Promise<any>;
+  // User notification methods
   getHistory: (userId: string) => Promise<Notification[]>;
-  getWaiting: (userId: string) => Promise<NotificationsListResponse>;
-  getDelivered: (userId: string) => Promise<NotificationsListResponse>;
   getStats: (userId: string) => Promise<NotificationStats>;
+  getUnreadCount: (userId: string) => Promise<number>;
   deleteOldNotifications: (userId: string) => Promise<any>;
-  getAllNotifications: () => Promise<Notification[]>;
-  clearAllNotifications: () => Promise<any>;
-  getAdminQueues: () => Promise<any>;
+  
+  // Department notification methods
+  getDepartmentHistory: (departmentId: string) => Promise<Notification[]>;
+  getDepartmentSubscribers: (departmentId: string) => Promise<number>;
+  
+  // State
   isLoading: boolean;
   error: Error | null;
 }
